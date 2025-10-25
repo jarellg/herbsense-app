@@ -7,8 +7,8 @@ import { useSupabaseBrowser } from '@/lib/supabase/client';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signInAnonymously: () => Promise<void>;
-  signInWithMagicLink: (email: string) => Promise<void>;
+  signInAnonymously: (captchaToken?: string) => Promise<void>;
+  signInWithMagicLink: (email: string, captchaToken?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -49,16 +49,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [supabase]);
 
-  const signInAnonymously = async () => {
-    const { error } = await supabase.auth.signInAnonymously();
+  const signInAnonymously = async (captchaToken?: string) => {
+    const { error } = await supabase.auth.signInAnonymously({
+      options: {
+        captchaToken,
+      },
+    });
     if (error) throw error;
   };
 
-  const signInWithMagicLink = async (email: string) => {
+  const signInWithMagicLink = async (email: string, captchaToken?: string) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
         emailRedirectTo: `${window.location.origin}/scan`,
+        captchaToken,
       },
     });
     if (error) throw error;
