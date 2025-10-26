@@ -6,14 +6,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Leaf, Scan, BookOpen, Shield, Sparkles } from 'lucide-react';
 import { useAuth } from '@/lib/auth/provider';
-import { HCaptchaWrapper } from '@/components/hcaptcha-wrapper';
 import { useToast } from '@/hooks/use-toast';
 
 export default function Home() {
   const router = useRouter();
   const { user, loading, signInAnonymously } = useAuth();
   const { toast } = useToast();
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
   useEffect(() => {
@@ -22,41 +20,10 @@ export default function Home() {
     }
   }, [user, loading, router]);
 
-  const handleCaptchaVerify = (token: string) => {
-    setCaptchaToken(token);
-  };
-
-  const handleCaptchaExpire = () => {
-    setCaptchaToken(null);
-    toast({
-      title: 'Verification expired',
-      description: 'Please complete the captcha again',
-      variant: 'destructive',
-    });
-  };
-
-  const handleCaptchaError = (error: string) => {
-    console.error('Captcha error:', error);
-    toast({
-      title: 'Verification failed',
-      description: 'Please try again',
-      variant: 'destructive',
-    });
-  };
-
   const handleGetStarted = async () => {
-    if (!captchaToken) {
-      toast({
-        title: 'Verification required',
-        description: 'Please complete the captcha first',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsVerifying(true);
     try {
-      await signInAnonymously(captchaToken);
+      await signInAnonymously();
       router.push('/scan');
     } catch (error) {
       console.error('Error signing in:', error);
@@ -65,7 +32,6 @@ export default function Home() {
         description: 'Please try again',
         variant: 'destructive',
       });
-      setCaptchaToken(null);
     } finally {
       setIsVerifying(false);
     }
@@ -111,23 +77,15 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="space-y-6">
-            <HCaptchaWrapper
-              onVerify={handleCaptchaVerify}
-              onExpire={handleCaptchaExpire}
-              onError={handleCaptchaError}
-            />
-
-            <Button
-              size="lg"
-              onClick={handleGetStarted}
-              disabled={!captchaToken || isVerifying}
-              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-lg px-8 py-6 h-auto disabled:opacity-50"
-            >
-              <Scan className="w-5 h-5 mr-2" />
-              {isVerifying ? 'Verifying...' : 'Get Started - Free'}
-            </Button>
-          </div>
+          <Button
+            size="lg"
+            onClick={handleGetStarted}
+            disabled={isVerifying}
+            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-lg px-8 py-6 h-auto disabled:opacity-50"
+          >
+            <Scan className="w-5 h-5 mr-2" />
+            {isVerifying ? 'Starting...' : 'Get Started - Free'}
+          </Button>
 
           <div className="grid md:grid-cols-3 gap-6 mt-16">
             <Card>
